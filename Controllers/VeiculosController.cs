@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace WebApiCSharp.Controllers
 
         [HttpGet]
         [Route("api/veiculos/popular")]
-        public string Popular()
+        public JObject Popular()
         {
             listaVeiculos.Add(new Veiculos(1, "FORD FIESTA", "1.0 MPI PERSONALITÉ SEDAN 4P", 2005, 2005, "Preto", 2, false, 25000, true));
             listaVeiculos.Add(new Veiculos(2, "Kia Cerato", "1.6 EX3 SEDAN 16V 4P A", 2014, 2015, "Prata", 3, true, 35000, true));
@@ -25,41 +26,68 @@ namespace WebApiCSharp.Controllers
             listaVeiculos.Add(new Veiculos(12, "CHEVROLET PRISMA", "1.4 MPFI LT BV FLEX 4P", 2013, 2013, "Preto", 3, true, 31000, true));
             listaVeiculos.Add(new Veiculos(27, "VOLKSVAGEN POLO", "1.0 200 TSI HIGHLINE", 2018, 2018, "Amarelo", 3, true, 66045, true));
 
-            return "Populado";
+            var resultado = JObject.Parse("{resultado : \"populado\"}");
+            return resultado;
         }
 
         // GET api/veiculos
-        public string Get()
+        public List<Veiculos> Get()
         {
-            return JsonConvert.SerializeObject(listaVeiculos);
+            return listaVeiculos;
            
         }
 
         // GET api/veiculos/5
-        public string Get(int id)
+        public Veiculos Get(int id)
         {
-            return JsonConvert.SerializeObject(listaVeiculos.Find(x => x.Id.Equals(id)));
+            return listaVeiculos.Find(x => x.Id.Equals(id));
         }
 
         // POST api/veiculos
-        public void Post([FromBody] string value)
+        public JObject Post([FromBody] Veiculos veiculo)
         {
+            var resultado = "";
+            if (veiculo.Id == 0)
+                resultado = "{resultado: \"Id não pode ser nulo nem zero\"}";
+            else if (String.IsNullOrEmpty(veiculo.Marca))
+                resultado += "{resultado : \"Marca deve ser informada\"}";
+            else if(veiculo.Valor == 0)
+                resultado += "{resultado : \"Valor não pode ser nulo nem zero\"}";
+
+            if (String.IsNullOrEmpty(resultado))
+            {
+                listaVeiculos.Add(new Veiculos(veiculo.Id, veiculo.Marca, veiculo.Modelo, veiculo.Ano, veiculo.Fabricacao, veiculo.Cor, veiculo.Combustivel,
+                veiculo.Automatico, veiculo.Valor, veiculo.Ativo));
+
+                resultado = "{resultado: \"OK\"}";
+            }
+           return JObject.Parse(resultado);
         }
 
         // PUT api/veiculos/5
-        public void Put(int id, [FromBody] string value)
+        public void Put(int id, [FromBody] Veiculos veiculo)
         {
+            var vei = listaVeiculos.Single(x => x.Id.Equals(id));
+
+            vei.Marca = veiculo.Marca;
+            vei.Modelo = veiculo.Modelo;
+            vei.Ano = veiculo.Ano;
+            vei.Fabricacao = veiculo.Fabricacao;
+            vei.Cor = veiculo.Cor;
+            vei.Combustivel = veiculo.Combustivel;
+            vei.Automatico = veiculo.Automatico;
+            vei.Valor = veiculo.Valor;
+            vei.Ativo = veiculo.Ativo;
+           
+
         }
 
-        [HttpGet]
-        [Route("api/veiculos/excluir/{id}")]
-        // DELETE api/veiculos/5
-        public string Excluir(int id)
-        {
-            var veiculo = listaVeiculos.Single(x => x.Id.Equals(id));
-            listaVeiculos.Remove(veiculo);
 
-            return "Excluido";
+        public void Delete(int id)
+        {
+            var item = listaVeiculos.FindIndex(x => x.Id.Equals(id));
+            listaVeiculos.RemoveAt(item);
+          
         }
     }
 }
